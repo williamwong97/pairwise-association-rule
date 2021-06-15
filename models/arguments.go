@@ -8,7 +8,7 @@ import (
 
 type Arguments struct {
 	DataFile   string
-	InputItems []string
+	 InputItems []string
 }
 
 const usage = `Arguments:
@@ -42,7 +42,7 @@ func ParseArgsFromCommand() Arguments {
 					fmt.Println("Expected --inputItems to be followed by inputItems.")
 					os.Exit(-1)
 				}
-				result.InputItems = strings.Split(args[i+1], "")
+				result.InputItems = strings.Split(args[i+1], ",")
 				i++
 			}
 		}

@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"pairwise-association-rule/models"
+	"sort"
 	"strings"
 	"time"
 )
@@ -23,34 +24,32 @@ func main() {
 
 	fmt.Println("---Read data file---")
 	data := readCsv(args.DataFile)
-	for _, row := range data {
-		fmt.Println(row)
-	}
+	fmt.Println("Amount of transactions contain from 2 items: ", len(data))
 
 	fmt.Println("---START: Training step---")
 	timer = time.Now()
 	trainedModels = training(data)
 	fmt.Println("---FINISH--- Time(microseconds): ", time.Now().Sub(timer).Microseconds())
-	for k, v := range trainedModels {
-		fmt.Printf(" %s -> %v", k, v)
-		fmt.Println()
-	}
+	//for k, v := range trainedModels {
+	//	fmt.Printf(" %s -> %v", k, v)
+	//	fmt.Println()
+	//}
 
 	fmt.Println("---START: Filter step---")
 	timer = time.Now()
 	filteredRules = filter(trainedModels, args.InputItems)
 	fmt.Println("---FINISH--- Time(microseconds): ", time.Now().Sub(timer).Microseconds())
-	for k, v := range filteredRules {
-		fmt.Printf(" %s -> %v", k, v)
-		fmt.Println()
-	}
+	//for k, v := range filteredRules {
+	//	fmt.Printf(" %s -> %v", k, v)
+	//	fmt.Println()
+	//}
 
 	fmt.Println("---Recommend step---")
 	timer = time.Now()
 	listRF = recommend(filteredRules)
 	fmt.Println("---FINISH--- Time(microseconds): ", time.Now().Sub(timer).Microseconds())
 	fmt.Println("!!!!!RECOMMENDATION RESULT!!!!!")
-	fmt.Println(listRF)
+	sortAndShowRecommendations(listRF)
 }
 
 func training(data [][]string) map[string]models.Item {
@@ -165,7 +164,7 @@ func filter(trainedModels map[string]models.Item, inputItems []string) map[strin
 			}
 
 		} else {
-			fmt.Println("Input item not in db yet !!!")
+			fmt.Println("Input item not in db yet : ", item)
 		}
 	}
 	return filteredRules
@@ -225,8 +224,12 @@ func readCsv(path string) [][]string {
 	for scanner.Scan() {
 		numTransactions++
 		row := strings.Split(scanner.Text(), ",")
-		rows = append(rows, row)
+		if len(row) > 1 {
+			rows = append(rows, row)
+		}
+
 	}
+	fmt.Println("Total transactions from csv: ", numTransactions)
 	return rows
 }
 
@@ -238,4 +241,24 @@ func contain(arr []string, item string) bool {
 		}
 	}
 	return false
+}
+
+func sortAndShowRecommendations(unsortedData map[string]float64) {
+	keys := make([]string, 0, len(unsortedData))
+	for key := range unsortedData {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return unsortedData[keys[i]] > unsortedData[keys[j]]
+	})
+
+	//show  top 15
+	counter := 0
+	for _, key := range keys {
+		if counter > 15 {
+			break
+		}
+		counter++
+		fmt.Printf("%s -> %v\n", key, unsortedData[key])
+	}
 }
